@@ -228,24 +228,26 @@ class BP_Profile_Completion_Helper {
 		    $this->notice = bpprocn_get_option( 'required_fields_incomplete_message' ).' (';
 		    
 		    if ( ! $has_fields ) {
+		        
 		        $incomplete_fields = get_user_meta( $user_id, '_has_required_field_data_fields', true );
 		        
 		        foreach($incomplete_fields as $incomplete_field){
 		        
 		            $field_data = \BP_XProfile_Field::get_instance( $incomplete_field );
 		        
-		            $this->notice .= '<a href="'.$redirect_url.'/group/'.$field_data->group_id.'/#field_'.$incomplete_field.'">'.$field_data->name.', </a>';
+		            $this->notice .= '<a href="'.$redirect_url.'/edit/group/'.$field_data->group_id.'/#field_'.$incomplete_field.'">'.$field_data->name.'</a>, ';
 		        }
 		    }
 		    
             if( !$has_photo ) {
-                $this->notice .= '<a href="'.$redirect_url . '/change-avatar/">'.__( 'Profile Photo', 'buddypress' ).', </a>';
+                $this->notice .= '<a href="'.$redirect_url . '/change-avatar/">'.__( 'Profile Photo', 'buddypress' ).'</a>, ';
             }
             
 		    if ( ! $has_cover ) {
-                $this->notice .= '<a href="'.$redirect_url . '/change-cover-image/">'.__( 'Cover Image', 'buddypress' ).', </a>'; 
+                $this->notice .= '<a href="'.$redirect_url . '/change-cover-image/">'.__( 'Cover Image', 'buddypress' ).'</a>, '; 
 		    }
 		    
+		    $this->notice = rtrim($this->notice, ', ');
 			$this->notice .= ') ';
 		} 
 
