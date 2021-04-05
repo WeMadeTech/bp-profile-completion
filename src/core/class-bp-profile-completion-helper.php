@@ -183,6 +183,7 @@ class BP_Profile_Completion_Helper {
 	 * @param int $user_id user id.
 	 */
 	private function show_notice_and_redirect( $user_id ) {
+	    global $bp, $profile_template;
 
 		if ( ! $this->has_incomplete_profile( $user_id ) ) {
 			// the profile is complete.
@@ -214,24 +215,39 @@ class BP_Profile_Completion_Helper {
 			$has_cover = $this->has_uploaded_cover( $user_id );
 		}
 
-		$redirect_url = bp_core_get_user_domain( $user_id ) . bp_get_profile_slug();
+		$redirect_url = bp_core_get_user_domain( $user_id ) .bp_get_profile_slug();
 
-		// this might have happened magically(most probably someone update profile by code).
+
 		if ( $has_cover && $has_photo && $has_fields ) {
 			$this->mark_complete_profile( $user_id );
 			$incomplete = false;
 			bp_core_add_message( __( 'Profile completed successfully.', 'bp-profile-completion' ), 'success' );
 			do_action( 'bpprocn_user_profile_completed', $user_id );
-		} elseif ( ! $has_fields ) {
-			$this->notice = bpprocn_get_option( 'required_fields_incomplete_message' );
-			$redirect_url = $redirect_url . '/edit/';
-		} elseif ( ! $has_photo ) {
-			$this->notice = bpprocn_get_option( 'profile_photo_incomplete_message' );
-			$redirect_url = $redirect_url . '/change-avatar/';
-		} elseif ( ! $has_cover ) {
-			$this->notice = bpprocn_get_option( 'profile_cover_incomplete_message' );
-			$redirect_url = $redirect_url . '/change-cover-image/';
-		}
+			
+		} else {
+		    $this->notice = bpprocn_get_option( 'required_fields_incomplete_message' ).' (';
+		    
+		    if ( ! $has_fields ) {
+		        $incomplete_fields = get_user_meta( $user_id, '_has_required_field_data_fields', true );
+		        
+		        foreach($incomplete_fields as $incomplete_field){
+		        
+		            $field_data = \BP_XProfile_Field::get_instance( $incomplete_field );
+		        
+		            $this->notice .= '<a href="'.$redirect_url.'/group/'.$field_data->group_id.'/#field_'.$incomplete_field.'">'.$field_data->name.', </a>';
+		        }
+		    }
+		    
+            if( !$has_photo ) {
+                $this->notice .= '<a href="'.$redirect_url . '/change-avatar/">'.__( 'Profile Photo', 'buddypress' ).', </a>';
+            }
+            
+		    if ( ! $has_cover ) {
+                $this->notice .= '<a href="'.$redirect_url . '/change-cover-image/">'.__( 'Cover Image', 'buddypress' ).', </a>'; 
+		    }
+		    
+			$this->notice .= ') ';
+		} 
 
 		if ( $incomplete ) {
 			if ( bpprocn_show_profile_incomplete_message() && $this->notice ) {
@@ -338,28 +354,32 @@ class BP_Profile_Completion_Helper {
 		if ( $has_fields_complete ) {
 			return $has_fields_complete; // no need to test further.
 		}
-
+        
 		$required_fields    = self::get_all_required_profile_fields( $user_id );
 
-		// No required field, so profile should be considered complete.
 		if ( empty( $required_fields ) ) {
 			update_user_meta( $user_id, '_has_required_field_data', 1 );
-
 			return true;
-		}
+		} 
 
 		$fields_list = '(' . join( ',', $required_fields ) . ')';
 
 		$query = $wpdb->prepare( "SELECT field_id, value  FROM {$table} WHERE user_id = %d AND field_id IN {$fields_list}", $user_id );
 
 		$profile_entries = $wpdb->get_results( $query );
-
+		
 		$complete = false;
-		// not all fields are set.
-		// shortcut.
+		
+		
 		if ( count( $profile_entries ) != count( $required_fields ) ) {
 			// unset flag.
 			delete_user_meta( $user_id, '_has_required_field_data' );
+			
+			foreach($profile_entries as $profile_entry) {
+			    $required_fields = array_diff( $required_fields, array($profile_entry->field_id) );
+			}
+			
+			update_user_meta( $user_id, '_has_required_field_data_fields', $required_fields ); 
 		} else {
 			$complete = true;
 			// it might be complete but is the value actually not empty?
@@ -372,6 +392,7 @@ class BP_Profile_Completion_Helper {
 			}
 			if ( $complete ) {
 				update_user_meta( $user_id, '_has_required_field_data', 1 );
+				delete_user_meta( $user_id, '_has_required_field_data_fields' );
 			}
 		}
 
