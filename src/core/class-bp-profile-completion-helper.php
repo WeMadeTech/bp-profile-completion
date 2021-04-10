@@ -254,7 +254,12 @@ class BP_Profile_Completion_Helper {
 		if ( $incomplete ) {
 			if ( bpprocn_show_profile_incomplete_message() && $this->notice ) {
 				bp_core_add_message( $this->notice, 'error' );
+				if ( !bp_is_user_profile_edit()){
+				    add_action('wp_footer', array($this,'action_footer_visitor')); 
+				}
+				
 			}
+			
 
 			if ( ! defined( 'DOING_AJAX' ) && bpprocn_is_profile_restriction_enabled() && ! bp_is_user_profile() ) {
 				bp_core_redirect( apply_filters_ref_array( 'buddypress_profile_completion_redirect', array(
@@ -265,6 +270,51 @@ class BP_Profile_Completion_Helper {
 				) ) );
 			}
 		}
+	}
+
+
+
+    function action_footer_visitor() { ?>		
+		<style>
+	
+		.overlay.startup {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+        }
+        .close-button {
+            position: absolute;
+            right: -40px;
+            top: 0px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 50%;
+            border: solid;
+            height: 30px;
+            width: 30px;
+            text-align: center;
+            cursor: pointer;
+        }
+		.startup-container {
+		    padding: 15px;
+		    position: relative;
+            width: 100%;
+            background: white;
+            max-width: 500px;
+			-webkit-box-shadow: 0px 0px 5px 2px rgba(50, 50, 50, 0.75);
+			-moz-box-shadow:    0px 0px 5px 2px rgba(50, 50, 50, 0.75);
+			box-shadow:         0px 0px 5px 2px rgba(50, 50, 50, 0.75);
+		}
+		</style>
+		<div class="overlay startup">
+			<div class="startup-container"> 
+			    <div class="close-button" onClick="document.querySelector('.overlay').style.display = 'none';" >X</div>
+			    <?php echo $this->notice; ?>
+		    </div>
+		<script>
+		</script>
+	<?php			
 	}
 
 	/**
