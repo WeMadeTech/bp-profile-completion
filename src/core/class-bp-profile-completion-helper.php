@@ -254,8 +254,14 @@ class BP_Profile_Completion_Helper {
 		if ( $incomplete ) {
 			if ( bpprocn_show_profile_incomplete_message() && $this->notice ) {
 				bp_core_add_message( $this->notice, 'error' );
-				if ( !bp_is_user_profile_edit()){
-				    add_action('wp_footer', array($this,'action_footer_visitor')); 
+				if ( ( is_buddypress() || get_post_type( get_the_ID() ) == 'job_listing' ) && !bp_is_profile_edit() && !bp_is_change_avatar() ) {
+				    
+				    global $wp;
+				    if( trailingslashit( bp_loggedin_user_domain() . bp_get_messages_slug() ).'compose/' == trailingslashit( home_url( $wp->request )) ){
+				        wp_redirect( bp_loggedin_user_domain() . bp_get_messages_slug() );
+				    }
+				    
+				    add_action('wp_footer', array($this, 'action_footer_visitor')); 
 				}
 				
 			}
@@ -296,16 +302,30 @@ class BP_Profile_Completion_Helper {
             text-align: center;
             cursor: pointer;
         }
-		.startup-container {
-		    padding: 15px;
-		    position: relative;
-            width: 100%;
+        .messages-wrapper #subnav #compose-personal-li{
+            display: none;
+        }
+        .startup-container {
+            padding: 15px;
+            position: relative;
+            max-width: calc( 100% - 30px);
             background: white;
-            max-width: 500px;
-			-webkit-box-shadow: 0px 0px 5px 2px rgba(50, 50, 50, 0.75);
-			-moz-box-shadow:    0px 0px 5px 2px rgba(50, 50, 50, 0.75);
-			box-shadow:         0px 0px 5px 2px rgba(50, 50, 50, 0.75);
-		}
+            width: 500px;
+            -webkit-box-shadow: 0px 0px 5px 2px rgb(50 50 50 / 75%);
+            -moz-box-shadow: 0px 0px 5px 2px rgba(50, 50, 50, 0.75);
+            box-shadow: 0px 0px 5px 2px rgb(50 50 50 / 75%);
+        }
+        @media screen and (max-width: 540px) {
+            .close-button {
+                right: 5px;
+                top: 5px;
+                height: 20px;
+                width: 20px;
+                line-height: 16px;
+                font-size: 15px;
+                border-width: 2px;
+            }
+        }
 		</style>
 		<div class="overlay startup">
 			<div class="startup-container"> 
